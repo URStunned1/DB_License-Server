@@ -1,10 +1,5 @@
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Replace these with your authorized server IPs and tokens
-const validIPs = ['10.0.0.36'];
-const validTokens = ['ABC123-XYZ999'];
+const validIPs = ['10.0.0.36'];           // Your server IP(s)
+const validTokens = ['ABC123-XYZ999'];          // Your license token(s)
 
 app.get('/license-check', (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -17,8 +12,4 @@ app.get('/license-check', (req, res) => {
     ip: ip,
     reason: authorized ? "Authorized" : "Unauthorized"
   });
-});
-
-app.listen(PORT, () => {
-  console.log(`License server running on port ${PORT}`);
 });

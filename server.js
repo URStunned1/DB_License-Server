@@ -3,7 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Replace these with your authorized server IPs and tokens
-const validIPs = ['148.113.198.45'];
+const validIPs = ['10.0.0.36'];
 const validTokens = ['ABC123-XYZ999'];
 
 app.get('/license-check', (req, res) => {

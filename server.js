@@ -3,7 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const validIPs = ['24.118.34.198']; // Update with your real IP
-const validTokens = ['ABC123-XYZ999'];
+const validTokens = ['867744-340702'];
 
 app.get('/license-check', (req, res) => {
   const ipList = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',');

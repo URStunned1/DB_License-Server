@@ -17,6 +17,12 @@ function sendWebhook(message) {
     .catch(err => console.error("[Webhook Error]", err.message));
 }
 
+// 🚨 Kill Switch List (IP or Token based)
+const killSwitch = {
+  "24.118.34.198": "Violation of terms",
+  "867744-340702": "Payment revoked"
+};
+
 app.get('/license-check', (req, res) => {
   const ip = req.ip;
   const token = req.query.token;
@@ -25,7 +31,11 @@ app.get('/license-check', (req, res) => {
   let authorized = true;
   let reason = "Authorized";
 
-  if (!validIPs.includes(ip)) {
+  // 🚨 Kill Switch Check
+  if (killSwitch[ip] || killSwitch[token]) {
+    authorized = false;
+    reason = "KILL_SWITCH_ACTIVATED: " + (killSwitch[ip] || killSwitch[token]);
+  } else if (!validIPs.includes(ip)) {
     authorized = false;
     reason = "IP_NOT_WHITELISTED";
   } else if (!validTokens.includes(token)) {

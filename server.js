@@ -19,8 +19,8 @@ function sendWebhook(message) {
 
 // 🚨 Kill Switch List (IP or Token based)
 const killSwitch = {
-  "24.118.34.198": "Violation of terms",
-  "867744-340702": "Payment revoked"
+  "0.0.0.0": "Violation of terms",
+  "0-0": "Payment revoked"
 };
 
 app.get('/license-check', (req, res) => {

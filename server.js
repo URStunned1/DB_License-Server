@@ -1,18 +1,20 @@
 
 const express = require('express');
 const axios = require('axios');
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors()); // Allow all origins for admin panel use
 app.set('trust proxy', true);
+app.use(express.json());
 
 const validIPs = ['148.113.198.45'];
 const validTokens = ['867744-340702'];
 const requiredVersion = '1.0.0';
 
 const webhookUrl = "https://discord.com/api/webhooks/1395621201837297664/37tnIEQ8NJR8kgSKcOwfe_qDYR_GAb8tSYLv88qZR6zV-09Wj96wPZiiGx2dRJmx3LGs";
-
-const adminApiKey = "URStunned1";
+const adminApiKey = "supersecretadminkey";
 
 function sendWebhook(message) {
   axios.post(webhookUrl, { content: message })
@@ -24,8 +26,6 @@ const killSwitch = {
   "0.0.0.0": "Violation of terms",
   "0-0": "Payment revoked"
 };
-
-app.use(express.json());
 
 app.get('/license-check', (req, res) => {
   const ip = req.ip;
@@ -70,14 +70,14 @@ app.post('/admin/update', (req, res) => {
 
   if (type === 'ip') {
     if (action === 'add') {
-      validIPs.push(value);
+      if (!validIPs.includes(value)) validIPs.push(value);
     } else if (action === 'remove') {
       const index = validIPs.indexOf(value);
       if (index > -1) validIPs.splice(index, 1);
     }
   } else if (type === 'token') {
     if (action === 'add') {
-      validTokens.push(value);
+      if (!validTokens.includes(value)) validTokens.push(value);
     } else if (action === 'remove') {
       const index = validTokens.indexOf(value);
       if (index > -1) validTokens.splice(index, 1);
@@ -93,9 +93,13 @@ app.post('/admin/update', (req, res) => {
   }
 
   sendWebhook(`[ADMIN UPDATE] Type: ${type}, Action: ${action}, Value: ${value}, Reason: ${reason || 'N/A'}`);
-  res.json({ message: "Update successful", current: { validIPs, validTokens, killSwitch } });
+  
+  res.json({
+    message: "Update successful",
+    current: { validIPs, validTokens, killSwitch }
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`License server running on port ${PORT}`);
+  console.log(`DadBods License Server running on port ${PORT}`);
 });

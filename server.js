@@ -2,22 +2,38 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const validIPs = ['24.118.34.198']; // Update with your real IP
-const validTokens = ['867744-340702'];
+app.set('trust proxy', true); // Handle Render proxy correctly
+
+const validIPs = ['24.118.34.198'];         // Whitelisted server IPs
+const validTokens = ['867744-340702'];      // Valid license tokens
+const requiredVersion = '1.0.0';            // Minimum allowed version
 
 app.get('/license-check', (req, res) => {
-  const ipList = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',');
-  const ip = ipList[0].trim();
+  const ip = req.ip;
   const token = req.query.token;
+  const version = req.query.version;
 
-  const authorized = validIPs.includes(ip) && validTokens.includes(token);
+  let authorized = true;
+  let reason = "Authorized";
 
-  console.log(`[LICENSE CHECK] IP: ${ip}, Token: ${token}, Authorized: ${authorized}`);
+  if (!validIPs.includes(ip)) {
+    authorized = false;
+    reason = "IP_NOT_WHITELISTED";
+  } else if (!validTokens.includes(token)) {
+    authorized = false;
+    reason = "INVALID_TOKEN";
+  } else if (version !== requiredVersion) {
+    authorized = false;
+    reason = "VERSION_MISMATCH";
+  }
+
+  console.log(`[LICENSE CHECK] IP: ${ip}, Token: ${token}, Version: ${version}, Authorized: ${authorized}, Reason: ${reason}`);
 
   res.json({
     authorized: authorized,
-    ip: ipList.join(', '),
-    reason: authorized ? "Authorized" : "Unauthorized"
+    ip: ip,
+    reason: reason,
+    requiredVersion: requiredVersion
   });
 });
 

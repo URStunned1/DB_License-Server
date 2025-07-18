@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', true);
 
-const validIPs = ['24.118.34.198'];
+const validIPs = ['148.113.198.45'];
 const validTokens = ['867744-340702'];
 const requiredVersion = '1.0.0';
 

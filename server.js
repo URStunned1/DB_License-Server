@@ -1,12 +1,21 @@
 const express = require('express');
+const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.set('trust proxy', true); // Handle Render proxy correctly
+app.set('trust proxy', true);
 
-const validIPs = ['24.118.34.198'];         // Whitelisted server IPs
-const validTokens = ['867744-340702'];      // Valid license tokens
-const requiredVersion = '1.0.0';            // Minimum allowed version
+const validIPs = ['24.118.34.198'];
+const validTokens = ['867744-340702'];
+const requiredVersion = '1.0.0';
+
+const webhookUrl = "https://discord.com/api/webhooks/1395621201837297664/37tnIEQ8NJR8kgSKcOwfe_qDYR_GAb8tSYLv88qZR6zV-09Wj96wPZiiGx2dRJmx3LGs";
+
+function sendWebhook(message) {
+  axios.post(webhookUrl, { content: message })
+    .then(() => console.log("[Webhook] Sent to Discord."))
+    .catch(err => console.error("[Webhook Error]", err.message));
+}
 
 app.get('/license-check', (req, res) => {
   const ip = req.ip;
@@ -27,7 +36,9 @@ app.get('/license-check', (req, res) => {
     reason = "VERSION_MISMATCH";
   }
 
-  console.log(`[LICENSE CHECK] IP: ${ip}, Token: ${token}, Version: ${version}, Authorized: ${authorized}, Reason: ${reason}`);
+  const logMessage = `[LICENSE CHECK] IP: ${ip}, Token: ${token}, Version: ${version}, Authorized: ${authorized}, Reason: ${reason}`;
+  console.log(logMessage);
+  sendWebhook(logMessage);
 
   res.json({
     authorized: authorized,

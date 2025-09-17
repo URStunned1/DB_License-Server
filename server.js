@@ -13,7 +13,7 @@ const validIPs = ['148.113.198.45'];
 const validTokens = ['867744-340702'];
 const requiredVersion = '1.0.0';
 
-const webhookUrl = "https://discord.com/api/webhooks/1397720241345400964/O4gdAE5mUR9U77Xa_o_2XaRdu6Vlcpd6oRwY2pg9xfK3UA-90ZNCx2D0kXV7ubwLfLzP";
+const webhookUrl = "https://discord.com/api/webhooks/1417704272145158215/uQS3squYA4lWm3b52zc0pkWvo9qbDMhCEK4vQeWZsLjUGtFtvCZJQAYUjHhjCqPFyazz";
 const adminApiKey = "supersecretadminkey";
 
 function sendWebhook(message) {

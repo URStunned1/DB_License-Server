@@ -56,7 +56,7 @@ app.get('/license-check', (req, res) => {
     reason = "VERSION_MISMATCH";
   }
 
-  const logMessage = `[LICENSE CHECK] IP: ${ip}, Token: ${token}, Version: ${version}, Authorized: ${authorized}, Reason: ${reason}`;
+  const logMessage = `[LICENSE CHECK] IP: ${ip}, Version: ${version}, Authorized: ${authorized}, Reason: ${reason}`;
   console.log(logMessage);
   sendWebhook(logMessage);
 

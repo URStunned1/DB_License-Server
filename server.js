@@ -11,7 +11,7 @@ app.use(express.json());
 
 const validIPs = ['148.113.198.45','24.118.34.198];
 const validTokens = ['867744-340702'];
-const requiredVersion = '1.0.0';
+const requiredVersion = '1.2.3';
 
 const webhookUrl = "https://discord.com/api/webhooks/1417704272145158215/uQS3squYA4lWm3b52zc0pkWvo9qbDMhCEK4vQeWZsLjUGtFtvCZJQAYUjHhjCqPFyazz";
 const adminApiKey = "supersecretadminkey";

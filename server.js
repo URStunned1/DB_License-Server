@@ -17,9 +17,16 @@ const webhookUrl = "https://discord.com/api/webhooks/1417704272145158215/uQS3squ
 const adminApiKey = "supersecretadminkey";
 
 function sendWebhook(message) {
+  if (!webhookUrl) return;
   axios.post(webhookUrl, { content: message })
-    .then(() => console.log("[Webhook] Sent to Discord."))
-    .catch(err => console.error("[Webhook Error]", err.message));
+    .then(() => console.log("[Webhook] ✅ Sent to Discord."))
+    .catch(err => {
+      console.error("[Webhook Error] ❌", err.message);
+      if (err.response) {
+        console.error("Status:", err.response.status);
+        console.error("Data:", err.response.data);
+      }
+    });
 }
 
 const killSwitch = {
@@ -69,31 +76,20 @@ app.post('/admin/update', (req, res) => {
   }
 
   if (type === 'ip') {
-    if (action === 'add') {
-      if (!validIPs.includes(value)) validIPs.push(value);
-    } else if (action === 'remove') {
-      const index = validIPs.indexOf(value);
-      if (index > -1) validIPs.splice(index, 1);
-    }
+    if (action === 'add' && !validIPs.includes(value)) validIPs.push(value);
+    if (action === 'remove') validIPs.splice(validIPs.indexOf(value), 1);
   } else if (type === 'token') {
-    if (action === 'add') {
-      if (!validTokens.includes(value)) validTokens.push(value);
-    } else if (action === 'remove') {
-      const index = validTokens.indexOf(value);
-      if (index > -1) validTokens.splice(index, 1);
-    }
+    if (action === 'add' && !validTokens.includes(value)) validTokens.push(value);
+    if (action === 'remove') validTokens.splice(validTokens.indexOf(value), 1);
   } else if (type === 'kill') {
-    if (action === 'add') {
-      killSwitch[value] = reason || "No reason provided";
-    } else if (action === 'remove') {
-      delete killSwitch[value];
-    }
+    if (action === 'add') killSwitch[value] = reason || "No reason provided";
+    if (action === 'remove') delete killSwitch[value];
   } else {
     return res.status(400).json({ message: "Invalid type" });
   }
 
   sendWebhook(`[ADMIN UPDATE] Type: ${type}, Action: ${action}, Value: ${value}, Reason: ${reason || 'N/A'}`);
-  
+
   res.json({
     message: "Update successful",
     current: { validIPs, validTokens, killSwitch }

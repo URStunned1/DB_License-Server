@@ -9,7 +9,7 @@ app.use(cors()); // Allow all origins for admin panel use
 app.set('trust proxy', true);
 app.use(express.json());
 
-const validIPs = ['148.113.198.45'];
+const validIPs = ['148.113.198.45','24.118.34.198];
 const validTokens = ['867744-340702'];
 const requiredVersion = '1.0.0';
 

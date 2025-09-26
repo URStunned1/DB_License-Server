@@ -8,55 +8,28 @@ app.use(cors());
 app.set('trust proxy', true);
 app.use(express.json());
 
+// Whitelist settings
 const validIPs = ['148.113.198.45', '24.118.34.198'];
 const validTokens = ['867744-340702'];
 const requiredVersion = '1.2.3';
+
+// Webhook config
 const webhookUrl = "https://discord.com/api/webhooks/1417704272145158215/uQS3squYA4lWm3b52zc0pkWvo9qbDMhCEK4vQeWZsLjUGtFtvCZJQAYUjHhjCqPFyazz";
 const adminApiKey = "supersecretadminkey";
 
+// Kill switch table
 const killSwitch = {
   "0.0.0.0": "Violation of terms",
   "0-0": "Payment revoked"
 };
 
-// ✉️ Send a webhook embed to Discord
-function sendWebhookEmbed({ ip, token, version, authorized, reason }) {
-  const statusEmoji = authorized ? '✅' : '❌';
-  const statusText = authorized ? 'AUTHORIZED' : 'UNAUTHORIZED';
-  const embed = {
-    embeds: [
-      {
-        title: '🔐 License Check',
-        color: authorized ? 0x2ecc71 : 0xe74c3c, // green or red
-        fields: [
-          {
-            name: '**IP Address**    **Token**         **Version**',
-            value: `${ip}    \`${token}\`         ${version}`
-          },
-          {
-            name: 'Status',
-            value: `${statusEmoji} ${statusText}`,
-            inline: true
-          },
-          // Only show reason if not authorized
-          ...(!authorized ? [{
-            name: 'Reason',
-            value: reason || 'N/A',
-            inline: true
-          }] : [])
-        ],
-        footer: {
-          text: 'DadBods License Server'
-        },
-        timestamp: new Date()
-      }
-    ]
-  };
-
-  axios.post(webhookUrl, embed)
-    .then(() => console.log("[Webhook] ✅ Sent to Discord."))
+// Send Discord embed
+function sendDiscordEmbed(embed) {
+  if (!webhookUrl) return;
+  axios.post(webhookUrl, { embeds: [embed] })
+    .then(() => console.log("[Webhook] ✅ Sent to Discord"))
     .catch(err => {
-      console.error("[Webhook Error] ❌", err.message);
+      console.error("[Webhook Error]", err.message);
       if (err.response) {
         console.error("Status:", err.response.status);
         console.error("Data:", err.response.data);
@@ -64,11 +37,10 @@ function sendWebhookEmbed({ ip, token, version, authorized, reason }) {
     });
 }
 
-// 🛡️ License Check Endpoint
 app.get('/license-check', (req, res) => {
-  const ip = req.ip;
-  const token = req.query.token;
-  const version = req.query.version;
+  const ip = req.ip || "UNKNOWN";
+  const token = req.query.token || "undefined";
+  const version = req.query.version || "undefined";
 
   let authorized = true;
   let reason = "Authorized";
@@ -87,26 +59,36 @@ app.get('/license-check', (req, res) => {
     reason = "VERSION_MISMATCH";
   }
 
-  const fields = [
-    { name: "IP Address", value: ip, inline: true },
-    { name: "Token", value: token || "None", inline: true },
-    { name: "Version", value: version || "Unknown", inline: true },
-    { name: "Status", value: authorized ? "✅ AUTHORIZED" : "❌ UNAUTHORIZED", inline: true },
-    { name: "Reason", value: reason }
-  ];
+  const embed = {
+    title: "🔐 License Check",
+    color: authorized ? 0x00cc66 : 0xcc0000,
+    fields: [
+      { name: "IP Address", value: ip, inline: true },
+      { name: "Token", value: `\`${token}\``, inline: true },
+      { name: "Version", value: version, inline: true },
+      { name: "Status", value: authorized ? "✅ AUTHORIZED" : "❌ UNAUTHORIZED", inline: true }
+    ],
+    footer: {
+      text: "DadBods License Server"
+    },
+    timestamp: new Date().toISOString()
+  };
 
-  sendWebhookEmbed("🔐 License Check", authorized ? 0x00cc66 : 0xff0000, fields);
-  console.log(`[LICENSE CHECK] IP: ${ip}, Version: ${version}, Authorized: ${authorized}, Reason: ${reason}`);
+  if (!authorized) {
+    embed.fields.push({ name: "Reason", value: reason });
+  }
+
+  sendDiscordEmbed(embed);
 
   res.json({
     authorized: authorized,
     ip: ip,
-    reason: reason,
+    reason: authorized ? undefined : reason,
     requiredVersion: requiredVersion
   });
 });
 
-// ⚙️ Admin Panel Endpoint
+// Admin webhook control
 app.post('/admin/update', (req, res) => {
   const { apiKey, type, action, value, reason } = req.body;
 
@@ -114,45 +96,35 @@ app.post('/admin/update', (req, res) => {
     return res.status(403).json({ message: "Unauthorized" });
   }
 
-  let updateMsg = "";
-
   if (type === 'ip') {
-    if (action === 'add' && !validIPs.includes(value)) {
-      validIPs.push(value);
-      updateMsg = `✅ IP Added: ${value}`;
-    } else if (action === 'remove') {
-      validIPs.splice(validIPs.indexOf(value), 1);
-      updateMsg = `🗑️ IP Removed: ${value}`;
-    }
+    if (action === 'add' && !validIPs.includes(value)) validIPs.push(value);
+    if (action === 'remove') validIPs.splice(validIPs.indexOf(value), 1);
   } else if (type === 'token') {
-    if (action === 'add' && !validTokens.includes(value)) {
-      validTokens.push(value);
-      updateMsg = `✅ Token Added: ${value}`;
-    } else if (action === 'remove') {
-      validTokens.splice(validTokens.indexOf(value), 1);
-      updateMsg = `🗑️ Token Removed: ${value}`;
-    }
+    if (action === 'add' && !validTokens.includes(value)) validTokens.push(value);
+    if (action === 'remove') validTokens.splice(validTokens.indexOf(value), 1);
   } else if (type === 'kill') {
-    if (action === 'add') {
-      killSwitch[value] = reason || "No reason provided";
-      updateMsg = `💀 Kill Switch Added: ${value} (${reason || 'No reason'})`;
-    } else if (action === 'remove') {
-      delete killSwitch[value];
-      updateMsg = `🧼 Kill Switch Removed: ${value}`;
-    }
+    if (action === 'add') killSwitch[value] = reason || "No reason provided";
+    if (action === 'remove') delete killSwitch[value];
   } else {
     return res.status(400).json({ message: "Invalid type" });
   }
 
-  const fields = [
-    { name: "Type", value: type, inline: true },
-    { name: "Action", value: action, inline: true },
-    { name: "Value", value: value || "N/A", inline: true },
-    { name: "Reason", value: reason || "N/A" }
-  ];
+  const adminEmbed = {
+    title: "⚙️ Admin Update",
+    color: 0xffa500,
+    fields: [
+      { name: "Type", value: type, inline: true },
+      { name: "Action", value: action, inline: true },
+      { name: "Value", value: value, inline: true },
+      { name: "Reason", value: reason || "N/A", inline: false }
+    ],
+    footer: {
+      text: "DadBods License Server"
+    },
+    timestamp: new Date().toISOString()
+  };
 
-  sendWebhookEmbed("⚙️ Admin Update", 0x3399ff, fields);
-  console.log(`[ADMIN] ${updateMsg}`);
+  sendDiscordEmbed(adminEmbed);
 
   res.json({
     message: "Update successful",
@@ -160,7 +132,6 @@ app.post('/admin/update', (req, res) => {
   });
 });
 
-// 🌐 Start Server
 app.listen(PORT, () => {
-  console.log(`🚀 DadBods License Server running on port ${PORT}`);
+  console.log(`✅ DadBods License Server running on port ${PORT}`);
 });

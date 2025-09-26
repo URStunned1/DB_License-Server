@@ -20,19 +20,37 @@ const killSwitch = {
 };
 
 // ✉️ Send a webhook embed to Discord
-function sendWebhookEmbed(title, color, fields) {
-  if (!webhookUrl) return;
-
+function sendWebhookEmbed({ ip, token, version, authorized, reason }) {
+  const statusEmoji = authorized ? '✅' : '❌';
+  const statusText = authorized ? 'AUTHORIZED' : 'UNAUTHORIZED';
   const embed = {
-    embeds: [{
-      title: title,
-      color: color,
-      fields: fields,
-      timestamp: new Date().toISOString(),
-      footer: {
-        text: "DadBods License Server"
+    embeds: [
+      {
+        title: '🔐 License Check',
+        color: authorized ? 0x2ecc71 : 0xe74c3c, // green or red
+        fields: [
+          {
+            name: '**IP Address**    **Token**         **Version**',
+            value: `${ip}    \`${token}\`         ${version}`
+          },
+          {
+            name: 'Status',
+            value: `${statusEmoji} ${statusText}`,
+            inline: true
+          },
+          // Only show reason if not authorized
+          ...(!authorized ? [{
+            name: 'Reason',
+            value: reason || 'N/A',
+            inline: true
+          }] : [])
+        ],
+        footer: {
+          text: 'DadBods License Server'
+        },
+        timestamp: new Date()
       }
-    }]
+    ]
   };
 
   axios.post(webhookUrl, embed)

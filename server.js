@@ -9,7 +9,7 @@ app.set('trust proxy', true);
 app.use(express.json());
 
 // Whitelist settings
-const validIPs = ['148.113.198.45', '24.118.34.198'];
+const validIPs = ['148.113.198.45', '73.164.7.52'];
 const validTokens = ['867744-340702'];
 const requiredVersion = '1.2.3';
 
